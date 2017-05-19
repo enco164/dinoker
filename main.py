@@ -68,17 +68,17 @@ for episode in range(20, episodes):
         state, reward, game_over = env.act(action)
 
         # store experience with probability 0.5 if there is no obstacle on screen
-        if np.random.rand() <= 0.5 and \
-           state_p[0*13 + 1] == -1 and \
-           state_p[1*13 + 1] == -1 and \
-           state_p[2*13 + 1] == -1 and \
-           state_p[3*13 + 1] == -1:
-            exp_replay.remember((state_p, action, reward, state), game_over)
-        elif state_p[0*13 + 1] != -1 or \
-           state_p[1*13 + 1] != -1 or \
-           state_p[2*13 + 1] != -1 or  \
-           state_p[3*13 + 1] != -1:
-            exp_replay.remember((state_p, action, reward, state), game_over)
+        # if np.random.rand() <= 0.5 and \
+        #    state_p[0*13 + 1] == -1 and \
+        #    state_p[1*13 + 1] == -1 and \
+        #    state_p[2*13 + 1] == -1 and \
+        #    state_p[3*13 + 1] == -1:
+        #     exp_replay.remember((state_p, action, reward, state), game_over)
+        # elif state_p[0*13 + 1] != -1 or \
+        #    state_p[1*13 + 1] != -1 or \
+        #    state_p[2*13 + 1] != -1 or  \
+        #    state_p[3*13 + 1] != -1:
+        exp_replay.remember((state_p, action, reward, state), game_over)
 
         # adapt model
         if exp_replay.can_learn():
