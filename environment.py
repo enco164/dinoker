@@ -27,6 +27,8 @@ class Environment(object):
     def get_js_state_script(self):
         return \
             "var speed = Runner.instance_.currentSpeed;" \
+            "var tRexXPos = Runner.instance_.tRex.xPos;" \
+            "var tRexYPos = Runner.instance_.tRex.yPos;" \
             "var obstacle1 = Runner.instance_.horizon.obstacles[0];" \
             "var obstacle2 = Runner.instance_.horizon.obstacles[1];" \
             "var obstacle3 = Runner.instance_.horizon.obstacles[2];" \
@@ -61,19 +63,15 @@ class Environment(object):
             "   obstacle3YPos = obstacle3.yPos;" \
             "}" \
             "return [(speed-13)/7., " \
+            "(tRexXPos-500)/500., (tRexYPos-105)/105.," \
             "(obstacle1Width-35)/35., (obstacle1Height-35)/35., (obstacle1XPos-500)/500., (obstacle1YPos-105)/105.," \
             "(obstacle2Width-35)/35., (obstacle3Height-35)/35., (obstacle2XPos-500)/500., (obstacle2YPos-105)/105.," \
             "(obstacle3Width-35)/35., (obstacle3Height-35)/35., (obstacle3XPos-500)/500., (obstacle3YPos-105)/105.];"
             # speed: 6-20
             # width: 0-36
-            #
 
     def get_state(self):
         states = list()
-        states.extend(self.webdriver.execute_script(self.get_js_state_script()))
-        time.sleep(self.ms_per_frame/100.)
-        states.extend(self.webdriver.execute_script(self.get_js_state_script()))
-        states.extend(self.webdriver.execute_script(self.get_js_state_script()))
         states.extend(self.webdriver.execute_script(self.get_js_state_script()))
         return np.array(states)
 
@@ -93,9 +91,10 @@ class Environment(object):
 
         reward = 0
         if game_over:
-            reward = -1
-        elif len(self.state) > 0 and self.state[3] != 10000 and self.state[3] < new_state[3]:
-            reward = 1
+            reward = -20
+        elif len(self.state) > 0 and self.state[5] != 10000 and self.state[5] < new_state[5]:
+            print "===========jumped========="
+            reward = 5
 
         self.state = new_state
 

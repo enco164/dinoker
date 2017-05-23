@@ -10,7 +10,7 @@ class ExperienceReplay(object):
     def remember(self, states, game_over):
         # memory[i] = ((state_t, action_t, reward_t, state_t+1), game_over?)
         self.memory.append((states, game_over))
-        if len(self.memory) > self.max_memory:
+        while len(self.memory) > self.max_memory:
             del self.memory[0]
 
     def get_batch(self, model, batch_size=10):
@@ -44,6 +44,10 @@ class ExperienceReplay(object):
 
     def save_memory(self):
         np.save("memory", self.memory)
+
+    def load_memory(self, name):
+        self.memory = np.load(name+'.npy')
+        self.memory = self.memory.tolist()
 
     def can_learn(self):
         return len(self.memory) > 4
