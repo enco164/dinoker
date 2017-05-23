@@ -16,10 +16,9 @@ class ExperienceReplay(object):
     def get_batch(self, model, batch_size=10):
         len_memory = len(self.memory)
         num_actions = model.output_shape[-1]
-        env_dim = self.memory[0][0][0].shape[0]
-
+        env_dim = self.memory[0][0][0].shape
         # init empty arrays
-        inputs = np.zeros((min(len_memory, batch_size), env_dim))
+        inputs = np.zeros((min(len_memory, batch_size), env_dim[1], env_dim[2], env_dim[3]))
         targets = np.zeros((inputs.shape[0], num_actions))
 
         for i, idx in enumerate(np.random.randint(0, len_memory, size=inputs.shape[0])):
@@ -31,8 +30,8 @@ class ExperienceReplay(object):
 
             # Calculate values for all actions,.
             # Thou shalt not correct actions not taken #deep
-            targets[i] = model.predict(state_t.reshape((1, -1)))[0]
-            Q_sa = np.max(model.predict(state_tp1.reshape((1, -1)))[0])
+            targets[i] = model.predict(state_t)[0]
+            Q_sa = np.max(model.predict(state_tp1)[0])
 
             if game_over:  # if game_over is True
                 targets[i, action_t] = reward_t
