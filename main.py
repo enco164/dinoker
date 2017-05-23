@@ -25,7 +25,7 @@ num_actions = 3
 input_shape = 15
 hidden_size = 100
 max_memory = 300
-batch_size = 4
+batch_size = 3
 
 if os.path.isfile(file_name):
     print "citam"
@@ -88,7 +88,9 @@ for episode in range(0, episodes):
         # start = time.time()
         state, reward, game_over = env.act(action)
 
-        exp_replay.remember((state_p, action, reward, state), game_over)
+        if env.get_obstacle_pos() != 1000 and np.random.rand() <= .4:
+            exp_replay.remember((state_p, action, reward, state), game_over)
+
         # # adapt model
         if exp_replay.can_learn():
             inputs, targets = exp_replay.get_batch(model, batch_size=batch_size)

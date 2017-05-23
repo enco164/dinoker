@@ -81,11 +81,10 @@ class EnvironmentImages(object):
             pyautogui.keyDown('up', pause=0.15)
             pyautogui.keyUp('up')
 
-        game_over = self.is_game_over()
         old_obstacle_pos = self.obstacle_pos
-
         state = self.get_state()
 
+        game_over = self.is_game_over()
         reward = 0
         if game_over:
             reward = -10
