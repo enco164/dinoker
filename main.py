@@ -16,16 +16,16 @@ np.random.seed(seed)
 log_file = open('log.txt', 'w')
 log_file.seek(0)
 
-file_name = 'nagrade(-10,2)_e210.h5_e230.h5'
+file_name = 'Conv2D_screenshot_e990.h5'
 test = False
 
 epsilon = .5
-episodes = 1000
+episodes = 100000
 num_actions = 3
 input_shape = 15
 hidden_size = 100
 max_memory = 300
-batch_size = 3
+batch_size = 20
 
 if os.path.isfile(file_name):
     print "citam"
@@ -51,11 +51,11 @@ file_name = 'Conv2D_screenshot'
 
 env = EnvironmentImages()
 exp_replay = ExperienceReplay(max_memory=max_memory)
-# exp_replay.load_memory("memory")
+exp_replay.load_memory("memory")
 can_play = env.reset()
 time.sleep(1)
-
-for episode in range(0, episodes):
+isnan = False
+for episode in range(990, episodes):
 
     epsilon = 1.0 - (episode*1.0/episodes*1.0) ** .5
     if test:
@@ -97,12 +97,14 @@ for episode in range(0, episodes):
             loss += model.train_on_batch(inputs, targets)
 
             if math.isnan(targets[0][0]) or math.isnan(targets[1][0]) or math.isnan(targets[2][0]):
+                isnan = True
                 print "====================N A N============================="
                 print inputs[0]
                 print targets[0]
                 print>> log_file, "====================N A N============================="
                 print>> log_file, inputs[0]
                 print>> log_file, targets[0]
+                break
 
 
         totalReward += reward
@@ -111,9 +113,11 @@ for episode in range(0, episodes):
         .format(episode, totalReward, exp_replay.memory_len(), epsilon, end - start)
     print>> log_file, "<<<Episode: {}; Total Reward: {}; Memory: {}; eps: {}, time: {}>>>"\
         .format(episode, totalReward, exp_replay.memory_len(), epsilon, end - start)
-    if episode % 10 == 0:
+    if episode % 20 == 0:
         model.save(file_name + "_e" + str(episode) + ".h5")  # creates a HDF5 file
         exp_replay.save_memory()
+    if isnan:
+        break
 
 log_file.truncate()
 log_file.close()

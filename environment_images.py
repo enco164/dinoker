@@ -9,6 +9,21 @@ from selenium.webdriver.common.action_chains import ActionChains
 
 from PIL import Image
 from mss import mss
+import thread
+
+
+# called by each thread
+def do_action(action):
+    if action == 0:
+        pyautogui.keyDown('down')
+        time.sleep(0.1)
+        pyautogui.keyUp('down')
+    elif action == 2:
+        pyautogui.keyDown('up')
+        time.sleep(0.1)
+        pyautogui.keyUp('up')
+    pass
+
 
 class EnvironmentImages(object):
     def __init__(self, url="http://wayou.github.io/t-rex-runner/"):
@@ -75,10 +90,10 @@ class EnvironmentImages(object):
 
     def act(self, action):
         if action == 0:
-            pyautogui.keyDown('down', pause=0.15)
+            pyautogui.keyDown('down', pause=0.100)
             pyautogui.keyUp('down')
         elif action == 2:
-            pyautogui.keyDown('up', pause=0.15)
+            pyautogui.keyDown('up', pause=0.100)
             pyautogui.keyUp('up')
 
         old_obstacle_pos = self.obstacle_pos
