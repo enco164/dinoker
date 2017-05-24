@@ -34,39 +34,39 @@ class Environment(object):
             "var obstacle3 = Runner.instance_.horizon.obstacles[2];" \
             "var obstacle1Width = 0;" \
             "var obstacle1Height = 0;" \
-            "var obstacle1XPos = 1000;" \
-            "var obstacle1YPos = 210;" \
+            "var obstacle1XPos = -0.5;" \
+            "var obstacle1YPos = -0.5;" \
             "var obstacle2Width = 0;" \
             "var obstacle2Height = 0;" \
-            "var obstacle2XPos = 1000;" \
-            "var obstacle2YPos = 210;" \
+            "var obstacle2XPos = -0.5;" \
+            "var obstacle2YPos = -0.5;" \
             "var obstacle3Width = 0;" \
             "var obstacle3Height = 0;" \
-            "var obstacle3XPos = 1000;" \
-            "var obstacle3YPos = 210;" \
+            "var obstacle3XPos = -0.5;" \
+            "var obstacle3YPos = -0.5;" \
             "if (obstacle1) {" \
-            "   obstacle1Width = obstacle1.width;" \
-            "   obstacle1Height = obstacle1.typeConfig.height;" \
-            "   obstacle1XPos = obstacle1.xPos;" \
-            "   obstacle1YPos = obstacle1.yPos;" \
+            "   obstacle1Width = obstacle1.width / 100;" \
+            "   obstacle1Height = obstacle1.typeConfig.height / 150;" \
+            "   obstacle1XPos = obstacle1.xPos / 600;" \
+            "   obstacle1YPos = obstacle1.yPos / 150;" \
             "}" \
             "if (obstacle2) {" \
-            "   obstacle2Width = obstacle2.width;" \
-            "   obstacle2Height = obstacle2.typeConfig.height;" \
-            "   obstacle2XPos = obstacle2.xPos;" \
-            "   obstacle2YPos = obstacle2.yPos;" \
+            "   obstacle2Width = obstacle2.width / 100;" \
+            "   obstacle2Height = obstacle2.typeConfig.height / 150;" \
+            "   obstacle2XPos = obstacle2.xPos / 600;" \
+            "   obstacle2YPos = obstacle2.yPos / 150;" \
             "}"\
             "if (obstacle3) {" \
-            "   obstacle3Width = obstacle3.width;" \
-            "   obstacle3Height = obstacle3.typeConfig.height;" \
-            "   obstacle3XPos = obstacle3.xPos;" \
-            "   obstacle3YPos = obstacle3.yPos;" \
+            "   obstacle3Width = obstacle3.width / 100;" \
+            "   obstacle3Height = obstacle3.typeConfig.height / 150;" \
+            "   obstacle3XPos = obstacle3.xPos / 600;" \
+            "   obstacle3YPos = obstacle3.yPos / 150;" \
             "}" \
-            "return [(speed-13)/7., " \
-            "(tRexXPos-500)/500., (tRexYPos-105)/105.," \
-            "(obstacle1Width-35)/35., (obstacle1Height-35)/35., (obstacle1XPos-500)/500., (obstacle1YPos-105)/105.," \
-            "(obstacle2Width-35)/35., (obstacle3Height-35)/35., (obstacle2XPos-500)/500., (obstacle2YPos-105)/105.," \
-            "(obstacle3Width-35)/35., (obstacle3Height-35)/35., (obstacle3XPos-500)/500., (obstacle3YPos-105)/105.];"
+            "return [speed / 25., " \
+            "tRexXPos / 100, tRexYPos / 150," \
+            "obstacle1Width, obstacle1Height, obstacle1XPos, obstacle1YPos," \
+            "obstacle2Width, obstacle3Height, obstacle2XPos, obstacle2YPos," \
+            "obstacle3Width, obstacle3Height, obstacle3XPos, obstacle3YPos];"
             # speed: 6-20
             # width: 0-36
 
@@ -80,25 +80,22 @@ class Environment(object):
 
     def act(self, action):
         if action == 0:
-            pyautogui.keyDown('down', pause=0.15)
+            pyautogui.keyDown('down', pause=0.10)
             pyautogui.keyUp('down')
         elif action == 2:
-            pyautogui.keyDown('up', pause=0.15)
+            pyautogui.keyDown('up', pause=0.10)
             pyautogui.keyUp('up')
 
-        game_over = self.is_game_over()
         new_state = self.get_state()
 
+        game_over = self.is_game_over()
         reward = 0
+
         if game_over:
-            reward = -20
-        elif len(self.state) > 0 and self.state[5] != 10000 and self.state[5] < new_state[5]:
-            print "===========jumped========="
-            reward = 5
+            reward = -1
+        elif len(self.state) > 0 and self.state[5] != -0.5 and self.state[5] < new_state[5]:
+            reward = 0.1
 
         self.state = new_state
 
         return self.state, reward, self.is_game_over()
-
-    def getUrl(self):
-        return self.url
