@@ -17,7 +17,7 @@ log_file.seek(0)
 seed = 7
 np.random.seed(seed)
 
-file_name = 'nagrade(-1,.1)_sa_odsecanjem'
+file_name = 'nagrade(-1,.1)_sa_odsecanjem_e1360.h5'
 test = False
 
 epsilon = .5
@@ -25,12 +25,13 @@ episodes = 10000
 num_actions = 3
 input_shape = 15
 hidden_size = 60
-max_memory = 2000
-batch_size = 50
+max_memory = 2048
+batch_size = 128
 
 if os.path.isfile(file_name):
     print "citam"
     model = load_model(file_name)
+    file_name = "nagrade(-1,.1)_sa_odsecanjem"
 else:
     model = Sequential()
     model.add(Dense(hidden_size, input_shape=(input_shape,)))
@@ -44,14 +45,16 @@ else:
 
 env = Environment()
 exp_replay = ExperienceReplay(max_memory=max_memory)
-# exp_replay.load_memory("memory")
+if os.path.isfile("memory.npy"):
+    exp_replay.load_memory("memory")
 can_play = env.reset()
 time.sleep(1)
 isnan = False
+allReward = 0
 
-for episode in range(0, episodes):
+for episode in range(1360, episodes):
 
-    epsilon = 1.0 - (episode*1.0/episodes*1.0) ** .5
+    epsilon = (1.0 - (episode*1.0/episodes*1.0) ** .5) / 5.0
 
     loss = 0.0
     totalReward = 0
@@ -80,7 +83,7 @@ for episode in range(0, episodes):
         state, reward, game_over = env.act(action)
 
         # store experience with probability 0.5 if there is no obstacle on screen
-        if (np.random.rand() <= 0.5 and state_p[5] == -0.5) or state_p[5] != -0.5:
+        if (np.random.rand() <= 0.05 and state_p[5] == -0.5) or state_p[5] != -0.5:
             exp_replay.remember((state_p, action, reward, state), game_over)
         #
         # # adapt model
@@ -99,15 +102,25 @@ for episode in range(0, episodes):
 
         totalReward += reward
 
+    allReward += totalReward
     end = time.time()
     print "<<<Episode: {}; Total Reward: {}; loss: {}, Memory: {}; eps: {}, time: {}>>>" \
         .format(episode, totalReward, loss, exp_replay.memory_len(), epsilon, end - start)
     print>> log_file, "<<<Episode: {}; Total Reward: {}; loss: {}, Memory: {}; eps: {}, time: {}>>>" \
         .format(episode, totalReward, loss, exp_replay.memory_len(), epsilon, end - start)
+
     if episode % 20 == 0:
         model.save(file_name + "_e" + str(episode) + ".h5")  # creates a HDF5 file
         exp_replay.save_memory()
+        avg = (allReward + 20) * 10 / 20.0
+        print "===============Avg: {}".format(avg)
+        print>> log_file, "===============Avg: {}".format(avg)
+        allReward = 0
+
     if isnan:
         break
 
+
+log_file.truncate()
+log_file.close()
 env.webdriver.close()

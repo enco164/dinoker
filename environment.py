@@ -93,9 +93,10 @@ class Environment(object):
 
         if game_over:
             reward = -1
+            time.sleep(1)
         elif len(self.state) > 0 and self.state[5] != -0.5 and self.state[5] < new_state[5]:
             reward = 0.1
 
         self.state = new_state
 
-        return self.state, reward, self.is_game_over()
+        return self.state, reward, game_over

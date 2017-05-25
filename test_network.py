@@ -1,17 +1,17 @@
 import time
 import numpy as np
-from environment_images import EnvironmentImages
+from environment import Environment
 from keras.models import load_model
 
 
-file_name = './networks/Conv2D/Conv2D_screenshot_e2000.h5'
+file_name = 'nagrade(-1,.1)_sa_odsecanjem_e1360.h5'
 test = False
 
 episodes = 100000
 
 model = load_model(file_name)
 
-env = EnvironmentImages()
+env = Environment()
 can_play = env.reset()
 time.sleep(1)
 for episode in range(0, episodes):
@@ -29,15 +29,16 @@ for episode in range(0, episodes):
 
     while not game_over:
         start = time.time()
-        q = model.predict(state)[0]
-        print q
+        q = model.predict(state.reshape((1, -1)))[0]
+        # print q
 
         action = np.argmax(q)
 
         state, reward, game_over = env.act(action)
         end = time.time()
-        totalReward += reward
-        print "Action: {}; Time: {}".format(action, end-start)
+        if reward > 0:
+            totalReward += 1
+        # print "Action: {}; Time: {}".format(action, end-start)
     print "<<<Episode: {}; Total Reward: {}>>>"\
         .format(episode, totalReward)
 
