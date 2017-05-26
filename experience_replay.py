@@ -1,5 +1,5 @@
 import numpy as np
-from tempfile import TemporaryFile
+
 
 class ExperienceReplay(object):
     def __init__(self, max_memory=100, discount=.9):
@@ -29,8 +29,7 @@ class ExperienceReplay(object):
             # fill first state
             inputs[i:i + 1] = state_t
 
-            # Calculate values for all actions,.
-            # Thou shalt not correct actions not taken #deep
+            # Calculate values for all actions
             targets[i] = model.predict(state_t.reshape((1, -1)))[0]
             Q_sa = np.max(model.predict(state_tp1.reshape((1, -1)))[0])
 

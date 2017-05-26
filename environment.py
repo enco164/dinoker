@@ -16,6 +16,9 @@ class Environment(object):
         self.state = np.array([])
         self.ms_per_frame = 16.6
 
+        self.input_shape = 15
+        self.num_actions = 3
+
     def reset(self):
         self.ms_per_frame = self.webdriver.execute_script("return Runner.instance_.msPerFrame")
         self.state = np.array([])
