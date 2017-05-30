@@ -4,7 +4,7 @@ from environment_images import EnvironmentImages
 from keras.models import load_model
 
 
-file_name = './networks/Conv2D/Conv2D_screenshot_e2000.h5'
+file_name = './Conv2D_screenshot_e1520.h5'
 test = False
 
 episodes = 100000
@@ -30,14 +30,15 @@ for episode in range(0, episodes):
     while not game_over:
         start = time.time()
         q = model.predict(state)[0]
-        print q
+        print np.argmax(q)
 
         action = np.argmax(q)
 
         state, reward, game_over = env.act(action)
         end = time.time()
-        totalReward += reward
-        print "Action: {}; Time: {}".format(action, end-start)
+        if reward > 0:
+            totalReward += 1
+
     print "<<<Episode: {}; Total Reward: {}>>>"\
         .format(episode, totalReward)
 
