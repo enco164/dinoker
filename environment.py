@@ -14,15 +14,15 @@ class Environment(object):
         self.runner_canvas = self.webdriver.find_element_by_class_name("runner-canvas")
         self.webdriver_actions = ActionChains(self.webdriver)
         self.state = np.array([])
-        self.ms_per_frame = 16.6
 
     def reset(self):
-        self.ms_per_frame = self.webdriver.execute_script("return Runner.instance_.msPerFrame")
         self.state = np.array([])
         self.webdriver_actions\
             .move_to_element(self.runner_canvas)\
             .key_down(Keys.SPACE).key_up(Keys.SPACE).perform()
-        return not self.webdriver.execute_script("return Runner.instance_.crashed")
+        time.sleep(0.5)
+        crashed = self.webdriver.execute_script("return Runner.instance_.crashed")
+        return not crashed
 
     def get_js_state_script(self):
         return \

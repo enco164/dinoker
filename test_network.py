@@ -4,7 +4,7 @@ from environment import Environment
 from keras.models import load_model
 
 
-file_name = 'nagrade(-1,.1)_sa_odsecanjem_e1360.h5'
+file_name = 'network_e1000.h5'
 test = False
 
 episodes = 100000

@@ -1,61 +1,55 @@
 import os.path
-import math
 import time
 import numpy as np
 from environment import Environment
-from keras.models import Sequential, load_model
-from keras.layers import Dense, Conv2D, Activation, Flatten
-from keras.optimizers import sgd, Adam
-
-from experience_replay import ExperienceReplay
+from agent import Agent
+from optparse import OptionParser
 
 
-log_file = open('log.txt', 'w')
+parser = OptionParser()
+(options, args) = parser.parse_args()
+
+log_file = open('log_e' + args[0] + '.txt', 'w')
 log_file.seek(0)
 
 # fix random seed for reproducibility
 seed = 7
 np.random.seed(seed)
 
-file_name = 'nagrade(-1,.1)_sa_odsecanjem_e1360.h5'
-test = False
-
-epsilon = .5
-episodes = 10000
+episodes = 5000
 num_actions = 3
-input_shape = 15
-hidden_size = 60
-max_memory = 2048
-batch_size = 128
+max_memory = 4096
+batch_size = 256
+hidden_size = 64
 
-if os.path.isfile(file_name):
-    print "citam"
-    model = load_model(file_name)
-    file_name = "nagrade(-1,.1)_sa_odsecanjem"
-else:
-    model = Sequential()
-    model.add(Dense(hidden_size, input_shape=(input_shape,)))
-    model.add(Activation('relu'))
-    model.add(Dense(hidden_size))
-    model.add(Activation('relu'))
-    model.add(Dense(num_actions))
-    adam = Adam()
-    model.compile(loss='mean_squared_error', optimizer=adam)
-# else end
+save_on_nth_episode = 20
+
+agent = Agent(num_actions=3,
+              max_memory=max_memory,
+              batch_size=batch_size,
+              input_shape=15,
+              hidden_size=hidden_size,
+              network_file_name="network_e000_e" + args[0] + "00",
+              memory_file_name="memory_e" + args[0] + "00",
+              log_file=log_file)
 
 env = Environment()
-exp_replay = ExperienceReplay(max_memory=max_memory)
-if os.path.isfile("memory.npy"):
-    exp_replay.load_memory("memory")
 can_play = env.reset()
 time.sleep(1)
 isnan = False
 allReward = 0
 
-for episode in range(1360, episodes):
+avg_episode_time = 5.0
+all_times = list()
 
-    epsilon = (1.0 - (episode*1.0/episodes*1.0) ** .5) / 5.0
+if os.path.isfile("all_times_e" + args[0] + "00" + '.npy'):
+    all_times = np.load("all_times_e" + args[0] + "00" + '.npy')
+    all_times = all_times.tolist()
 
+r = int(args[0])
+for episode in range(r * 100, (r+1) * 1000 * 2 + 1):
+
+    episode_exploration_rate = 1 - episode*1.0 / episodes*1.0  # (-(episode*1.0 / episodes*1.0) ** 2) + 1
     loss = 0.0
     totalReward = 0
     can_play = env.reset()
@@ -66,55 +60,52 @@ for episode in range(1360, episodes):
 
     game_over = False
     state = env.get_state()
-    start = time.time()
+
+    start_time = time.time()
+    current_time = time.time() * 1.0 - start_time
     while not game_over:
         state_p = state
 
-        action_log = ""
-        if np.random.rand() <= epsilon:
-            action = np.random.randint(0, num_actions)
-            action_log = "Action: {} --- Random".format(action)
-        else:
-            q = model.predict(state_p.reshape((1, -1)))[0]
-            action = np.argmax(q)
-            action_log = "Action: {}".format(action)
+        current_time = time.time()*1.0 - start_time
+        exploration_rate = current_time / avg_episode_time * episode_exploration_rate  #((current_time / avg_episode_time) ** 2) * episode_exploration_rate
 
-        # print action_log
+        # get action from agent based on state
+        action = agent.get_action(state_p.reshape((1, -1)), exploration_rate)
+
+        # send environment action
         state, reward, game_over = env.act(action)
 
-        # store experience with probability 0.5 if there is no obstacle on screen
-        if (np.random.rand() <= 0.05 and state_p[5] == -0.5) or state_p[5] != -0.5:
-            exp_replay.remember((state_p, action, reward, state), game_over)
-        #
-        # # adapt model
-        if exp_replay.can_learn():
-            inputs, targets = exp_replay.get_batch(model, batch_size=batch_size)
-            loss = model.train_on_batch(inputs, targets)
-            if math.isnan(targets[0][0]) or math.isnan(targets[1][0]) or math.isnan(targets[2][0]):
-                isnan = True
-                print "====================N A N============================="
-                print inputs[0]
-                print targets[0]
-                print>> log_file, "====================N A N============================="
-                print>> log_file, inputs[0]
-                print>> log_file, targets[0]
-                break
+        # store experience with probability 0.25 if there is no obstacle on screen
+        if (np.random.rand() <= 0.25 and state_p[5] == -0.5) or state_p[5] != -0.5:
+            agent.remember((state_p, action, reward, state), game_over)
 
-        totalReward += reward
+        # adapt model
+        agent.adapt_model()
+
+        if reward > 0:
+            totalReward += 1
 
     allReward += totalReward
-    end = time.time()
-    print "<<<Episode: {}; Total Reward: {}; loss: {}, Memory: {}; eps: {}, time: {}>>>" \
-        .format(episode, totalReward, loss, exp_replay.memory_len(), epsilon, end - start)
-    print>> log_file, "<<<Episode: {}; Total Reward: {}; loss: {}, Memory: {}; eps: {}, time: {}>>>" \
-        .format(episode, totalReward, loss, exp_replay.memory_len(), epsilon, end - start)
 
-    if episode % 20 == 0:
-        model.save(file_name + "_e" + str(episode) + ".h5")  # creates a HDF5 file
-        exp_replay.save_memory()
-        avg = (allReward + 20) * 10 / 20.0
-        print "===============Avg: {}".format(avg)
-        print>> log_file, "===============Avg: {}".format(avg)
+    # store episode time length
+    all_times.append(current_time)
+    if len(all_times) > save_on_nth_episode:
+        del all_times[0]
+
+    # update avg_episode_time
+    avg_episode_time = np.median(all_times)
+
+    print "<<<Episode: {}; Total Reward: {}; eps: {}, E: {}, time: {}>>>" \
+        .format(episode, totalReward, exploration_rate, episode_exploration_rate, current_time)
+    print>> log_file, "<<<Episode: {}; Total Reward: {}; eps: {}, E: {}, time: {}>>>" \
+        .format(episode, totalReward, exploration_rate, episode_exploration_rate, current_time)
+
+    if episode % save_on_nth_episode == 0:
+        agent.save_model(postfix="_e" + str(episode))
+        np.save("all_times" + "_e" + str(episode), all_times)
+        avg = allReward*1.0 / save_on_nth_episode * 1.0
+        print "===============Avg reward: {}".format(avg)
+        print>> log_file, "===============Avg reward: {}".format(avg)
         allReward = 0
 
     if isnan:

@@ -42,8 +42,8 @@ class ExperienceReplay(object):
 
         return inputs, targets
 
-    def save_memory(self):
-        np.save("memory", self.memory)
+    def save_memory(self, postfix=""):
+        np.save("memory" + postfix, self.memory)
 
     def load_memory(self, name):
         self.memory = np.load(name+'.npy')
