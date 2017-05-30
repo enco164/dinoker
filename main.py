@@ -1,3 +1,5 @@
+# https://www.cs.toronto.edu/~vmnih/docs/dqn.pdf
+
 import os.path
 import math
 import time
@@ -17,7 +19,6 @@ log_file = open('log.txt', 'w')
 log_file.seek(0)
 
 file_name = 'Conv2D_screenshot_e990.h5'
-test = False
 
 epsilon = .5
 episodes = 100000
@@ -25,23 +26,22 @@ num_actions = 3
 input_shape = 15
 hidden_size = 100
 max_memory = 2500
-batch_size = 50
+batch_size = 32
 #
 # if os.path.isfile(file_name):
 #     print "citam"
 #     model = load_model(file_name)
 # else:
 model = Sequential()
-model.add(Conv2D(32, (8, 8), padding="same", strides=(4, 4), input_shape=(84, 84, 4)))
+model.add(Conv2D(16, (8, 8), padding="same", strides=(4, 4), input_shape=(84, 84, 4)))
 model.add(Activation('relu'))
-model.add(Conv2D(64, (4, 4), padding="same", strides=(2, 2)))
-model.add(Activation('relu'))
-model.add(Conv2D(64, (3, 3), padding="same", strides=(1, 1)))
+model.add(Conv2D(32, (4, 4), padding="same", strides=(2, 2)))
 model.add(Activation('relu'))
 model.add(Flatten())
-model.add(Dense(512))
+model.add(Dense(256))
 model.add(Activation('relu'))
 model.add(Dense(num_actions))
+model.add(Activation('linear'))
 
 adam = Adam()
 model.compile(loss='mse', optimizer=adam)
@@ -55,11 +55,9 @@ exp_replay = ExperienceReplay(max_memory=max_memory)
 can_play = env.reset()
 time.sleep(1)
 isnan = False
-for episode in range(990, episodes):
+for episode in range(episodes):
 
-    epsilon = 1.0 - (episode*1.0/episodes*1.0) ** .5
-    if test:
-        epsilon = 0
+    epsilon = .2 - episode*1.0/episodes*1.0
 
     loss = 0.0
     totalReward = 0
