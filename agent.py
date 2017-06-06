@@ -6,28 +6,25 @@ from keras.layers import Dense, Activation
 from keras.optimizers import Adam
 from experience_replay import ExperienceReplay
 
-DEBUG = False
-
 
 class Agent(object):
     def __init__(self, num_actions,
                  max_memory=2048, batch_size=128, input_shape=15, hidden_size=60,
-                 network_file_name='network', memory_file_name="memory", log_file=open('log.txt', 'w')):
+                 network_file_name='network', memory_file_name="memory", log_file=open('log.txt', 'w'),
+                 iteration_postfix=""):
 
         self.log_file = log_file
         self.num_actions = num_actions
         self.network_file_name = network_file_name
-
-        self.exp_replay = ExperienceReplay(max_memory=max_memory)
-        if os.path.isfile(memory_file_name + ".npy"):
-            self.exp_replay.load_memory(memory_file_name)
-
         self.batch_size = batch_size
 
-        if os.path.isfile(network_file_name + '.h5'):
+        self.exp_replay = ExperienceReplay(max_memory=max_memory,
+                                           memory_file_name=memory_file_name,
+                                           iteration_postfix=iteration_postfix)
+
+        if os.path.isfile(network_file_name + iteration_postfix + '.h5'):
             print "===Reading model==="
-            self.model = load_model(network_file_name+'.h5')
-            self.network_file_name = 'network'
+            self.model = load_model(network_file_name + iteration_postfix + '.h5')
         else:
             print "===Creating model==="
             model = Sequential()
@@ -43,14 +40,9 @@ class Agent(object):
     def get_action(self, state, exploration_rate):
         if np.random.rand() <= exploration_rate:
             action = np.random.randint(0, self.num_actions)
-            action_log = "Action: {} --- Random".format(action)
         else:
             q = self.model.predict(state)[0]
             action = np.argmax(q)
-            action_log = "Action: {}".format(action)
-
-        if DEBUG:
-            print action_log
 
         return action
 
@@ -62,8 +54,7 @@ class Agent(object):
             inputs, targets = self.exp_replay.get_batch(self.model, batch_size=self.batch_size)
             self.model.train_on_batch(inputs, targets)
 
-            if math.isnan(targets[0][0]) or math.isnan(targets[1][0]) or math.isnan(targets[2][0]):
-                isnan = True
+            if math.isnan(targets[0][0]) or math.isnan(targets[0][1]) or math.isnan(targets[0][2]):
                 print "====================N A N============================="
                 print inputs[0]
                 print targets[0]
