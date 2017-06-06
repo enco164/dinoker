@@ -44,8 +44,8 @@ can_play = env.reset()
 time.sleep(1)
 allReward = 0
 
-if os.path.isfile('times' + options.k + '.npy'):
-    all_times = np.load('times' + options.k + '.npy')
+if os.path.isfile('times_e' + str(k*iterations) + '.npy'):
+    all_times = np.load('times_e' + str(k*iterations) + '.npy')
     all_times = all_times.tolist()
 else:
     all_times = [5.0]
@@ -109,7 +109,7 @@ for episode in range(k * iterations, (k+1) * iterations + 1):
 
     if episode % save_on_nth_episode == 0:
         agent.save_model(postfix=str(episode))
-        np.save("times" + "_e" + str(episode), all_times)
+        np.save("times_e" + str(episode), all_times)
         avg = allReward*1.0 / save_on_nth_episode * 1.0
         print "===============Avg reward: {}".format(avg)
         allReward = 0
