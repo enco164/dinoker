@@ -43,12 +43,12 @@ env = Environment()
 can_play = env.reset()
 time.sleep(1)
 allReward = 0
-mean_episode_time = 5.0
-all_times = list()
 
 if os.path.isfile('times' + options.k + '.npy'):
     all_times = np.load('times' + options.k + '.npy')
     all_times = all_times.tolist()
+else:
+    all_times = [5.0]
 
 for episode in range(k * iterations, (k+1) * iterations + 1):
 
@@ -63,6 +63,9 @@ for episode in range(k * iterations, (k+1) * iterations + 1):
 
     game_over = False
     state = env.get_state()
+
+    # update mean_episode_time
+    mean_episode_time = np.median(all_times)
 
     start_time = time.time()
     current_time = time.time() * 1.0 - start_time
@@ -98,9 +101,6 @@ for episode in range(k * iterations, (k+1) * iterations + 1):
     all_times.append(current_time)
     if len(all_times) > save_on_nth_episode:
         del all_times[0]
-
-    # update mean_episode_time
-    mean_episode_time = np.median(all_times)
 
     print "<<<Episode: {}; Total Reward: {}; eps: {}, E: {}, time: {}>>>" \
         .format(episode, totalReward, exploration_rate, episode_exploration_rate, current_time)
