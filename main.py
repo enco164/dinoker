@@ -104,7 +104,7 @@ for episode in range(k * iterations, (k+1) * iterations + 1):
 
     print "<<<Episode: {}; Total Reward: {}; eps: {}, E: {}, time: {}>>>" \
         .format(episode, totalReward, exploration_rate, episode_exploration_rate, current_time)
-    print>> "{}, {}, {}, {}, {}" \
+    print>> log_file, "{}, {}, {}, {}, {}" \
         .format(episode, totalReward, exploration_rate, episode_exploration_rate, current_time)
 
     if episode % save_on_nth_episode == 0:
