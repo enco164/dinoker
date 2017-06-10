@@ -9,7 +9,7 @@ from selenium.webdriver.common.action_chains import ActionChains
 class Environment(object):
     def __init__(self, url="http://wayou.github.io/t-rex-runner/"):
         self.url = url
-        self.webdriver = webdriver.Chrome("./chromedriver")
+        self.webdriver = webdriver.Chrome("../chromedriver")
         self.webdriver.get(self.url)
         self.runner_canvas = self.webdriver.find_element_by_class_name("runner-canvas")
         self.webdriver_actions = ActionChains(self.webdriver)
@@ -89,9 +89,9 @@ class Environment(object):
 
             # key down action
             if action == 0:
-                pyautogui.keyDown('down', pause=0.10)
+                pyautogui.keyDown('down')
             elif action == 2:
-                pyautogui.keyDown('up', pause=0.10)
+                pyautogui.keyDown('up')
 
             self.last_action = action
 
