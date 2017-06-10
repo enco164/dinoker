@@ -1,65 +1,60 @@
 # https://www.cs.toronto.edu/~vmnih/docs/dqn.pdf
 
-import os.path
 import math
+import os.path
 import time
 import numpy as np
 from environment import Environment
-from experience_replay import ExperienceReplay
-from keras.models import Sequential, load_model
-from keras.layers import Dense, Conv2D, Activation, Flatten
-from keras.optimizers import Adam
+from agent import Agent
+from optparse import OptionParser
 
 
-# fix random seed for reproducibility
-seed = 7
-np.random.seed(seed)
+parser = OptionParser()
+parser.add_option('-k', '--k', dest='k')
+parser.add_option('-i', '--iterations', dest='iterations')
+parser.add_option('-t', '--total_episodes', dest='total_episodes')
+(options, args) = parser.parse_args()
 
-log_file = open('log.txt', 'w')
+k = int(options.k)
+iterations = int(options.iterations)
+total_episodes = int(options.total_episodes)
+
+
+num_actions = 3
+max_memory = 4096
+batch_size = 32
+save_on_nth_episode = 10
+
+log_file = open('log_e' + options.k + '.txt', 'w')
 log_file.seek(0)
 
-file_name = 'Conv2D_screenshot_e990.h5'
+# fix random seed for reproducibility
+seed = 164
+np.random.seed(seed)
 
-epsilon = .5
-episodes = 100000
-num_actions = 3
-input_shape = 15
-hidden_size = 100
-max_memory = 2500
-batch_size = 32
-#
-# if os.path.isfile(file_name):
-#     print "citam"
-#     model = load_model(file_name)
-# else:
-model = Sequential()
-model.add(Conv2D(16, (8, 8), padding="same", strides=(4, 4), input_shape=(84, 84, 4)))
-model.add(Activation('relu'))
-model.add(Conv2D(32, (4, 4), padding="same", strides=(2, 2)))
-model.add(Activation('relu'))
-model.add(Flatten())
-model.add(Dense(256))
-model.add(Activation('relu'))
-model.add(Dense(num_actions))
-model.add(Activation('linear'))
 
-adam = Adam()
-model.compile(loss='mse', optimizer=adam)
-# else end
-
-file_name = 'Conv2D_screenshot'
+agent = Agent(num_actions=3,
+              max_memory=max_memory,
+              batch_size=batch_size,
+              network_file_name="network_e",
+              memory_file_name="memory_e",
+              iteration_postfix=str(k*iterations),
+              log_file=log_file)
 
 env = Environment()
-exp_replay = ExperienceReplay(max_memory=max_memory)
-# exp_replay.load_memory("memory")
 can_play = env.reset()
 time.sleep(1)
-isnan = False
-for episode in range(episodes):
+allReward = 0
 
-    epsilon = .2 - episode*1.0/episodes*1.0
+if os.path.isfile('times_e' + str(k*iterations) + '.npy'):
+    all_times = np.load('times_e' + str(k*iterations) + '.npy')
+    all_times = all_times.tolist()
+else:
+    all_times = [5.0]
 
-    loss = 0.0
+for episode in range(k * iterations, (k+1) * iterations + 1):
+
+    episode_exploration_rate = 1 - episode * 1.0 / total_episodes * 1.0  # (-(episode*1.0 / episodes*1.0) ** 2) + 1
     totalReward = 0
     can_play = env.reset()
 
@@ -69,64 +64,59 @@ for episode in range(episodes):
 
     game_over = False
     state = env.get_state()
-    start = time.time()
-    times_to_learn = 0
+
+    # update mean_episode_time
+    mean_episode_time = np.median(all_times)
+
+    start_time = time.time()
+    current_time = time.time() * 1.0 - start_time
+    times_played = 0
     while not game_over:
         state_p = state
-        remember_start = time.time()
-        # action_log = ""
-        if np.random.rand() <= epsilon:
-            action = np.random.randint(0, num_actions)
-            action_log = "Action: {} --- Random".format(action)
-        else:
-            q = model.predict(state_p)[0]
-            action = np.argmax(q)
-            action_log = "Action: {}".format(action)
-        print 'action_time: {}'.format(time.time() - remember_start)
-        print action_log
-        # start = time.time()
+
+        current_time = time.time() * 1.0 - start_time
+        exploration_rate = episode_exploration_rate
+        # exploration_rate = current_time / mean_episode_time * episode_exploration_rate  #((current_time / avg_episode_time) ** 2) * episode_exploration_rate
+
+        # get action from agent based on state
+        action = agent.get_action(state_p.reshape((1, -1)), exploration_rate)
+
+        # send environment action
         state, reward, game_over = env.act(action)
 
+        times_played += 1
         obs_pos = env.get_obstacle_pos()
-        if (obs_pos == 1000 and np.random.rand() <= .4) or obs_pos != 1000:
-            exp_replay.remember((state_p, action, reward, state), game_over)
+        if (obs_pos == 1000 and np.random.rand() <= .25) or obs_pos != 1000:
+            agent.remember((state_p, action, reward, state), game_over)
 
-
-        times_to_learn += 1
-
-        totalReward += reward
+        if reward > 0:
+            totalReward += 1
 
     end = time.time()
 
-    for j in range(times_to_learn):
-        print 'learning: {}'.format(j)
-        # adapt model
-        if exp_replay.can_learn():
-            inputs, targets = exp_replay.get_batch(model, batch_size=batch_size)
-            loss += model.train_on_batch(inputs, targets)
+    # adapt model
+    for _ in range(times_played):
+        agent.adapt_model()
 
-            if math.isnan(targets[0][0]) or math.isnan(targets[0][1]) or math.isnan(targets[0][2]):
-                isnan = True
-                print "====================N A N============================="
-                print inputs[0]
-                print targets[0]
-                print>> log_file, "====================N A N============================="
-                print>> log_file, inputs[0]
-                print>> log_file, targets[0]
-                break
+    allReward += totalReward
 
+    # store episode time length
+    all_times.append(current_time)
+    if len(all_times) > save_on_nth_episode:
+        del all_times[0]
 
-    print "<<<Episode: {}; Total Reward: {}; Memory: {}; eps: {}, time: {}>>>"\
-        .format(episode, totalReward, exp_replay.memory_len(), epsilon, end - start)
-    print>> log_file, "<<<Episode: {}; Total Reward: {}; Memory: {}; eps: {}, time: {}>>>"\
-        .format(episode, totalReward, exp_replay.memory_len(), epsilon, end - start)
-    if episode % 20 == 0:
-        model.save(file_name + "_e" + str(episode) + ".h5")  # creates a HDF5 file
-        exp_replay.save_memory()
-    if isnan:
-        break
+    print "<<<Episode: {}; Total Reward: {}; eps: {}, E: {}, time: {}>>>" \
+        .format(episode, totalReward, exploration_rate, episode_exploration_rate, current_time)
+    print>> log_file, "{}, {}, {}, {}, {}" \
+        .format(episode, totalReward, exploration_rate, episode_exploration_rate, current_time)
+
+    if episode % save_on_nth_episode == 0:
+        agent.save_model(postfix=str(episode))
+        # np.save("times_e" + str(episode), all_times)
+        avg = allReward * 1.0 / save_on_nth_episode * 1.0
+        print "===============Avg reward: {}".format(avg)
+        allReward = 0
 
 log_file.truncate()
 log_file.close()
-
 env.webdriver.close()

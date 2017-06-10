@@ -14,21 +14,21 @@ from mss import mss
 class Environment(object):
     def __init__(self, url="http://wayou.github.io/t-rex-runner/"):
         self.url = url
-        self.webdriver = webdriver.Chrome("./chromedriver")
+        self.webdriver = webdriver.Chrome("../chromedriver")
         self.webdriver.get(self.url)
         self.runner_canvas = self.webdriver.find_element_by_class_name("runner-canvas")
         self.webdriver_actions = ActionChains(self.webdriver)
-        self.webdriver.set_window_size(800, 600)
-        self.webdriver.set_window_position(50, 50)
         self.state = np.array([])
-        self.obstacle_pos = None
+        self.last_action = None
 
     def reset(self):
         self.state = np.array([])
         self.webdriver_actions\
             .move_to_element(self.runner_canvas)\
             .key_down(Keys.SPACE).key_up(Keys.SPACE).perform()
-        return not self.webdriver.execute_script("return Runner.instance_.crashed")
+        time.sleep(0.5)
+        crashed = self.webdriver.execute_script("return Runner.instance_.crashed")
+        return not crashed
 
     def get_screen(self):
 
@@ -58,7 +58,7 @@ class Environment(object):
 
         states = list()
 
-        # get 2 screens
+        # get 4 screens
         states.extend([self.get_screen()])
         time.sleep(0.016)
         states.extend([self.get_screen()])
@@ -76,12 +76,20 @@ class Environment(object):
         return self.webdriver.execute_script("return Runner.instance_.crashed")
 
     def act(self, action):
-        if action == 0:
-            pyautogui.keyDown('down', pause=0.100)
-            pyautogui.keyUp('down')
-        elif action == 2:
-            pyautogui.keyDown('up', pause=0.100)
-            pyautogui.keyUp('up')
+        if self.last_action != action:
+            # key up last action
+            if self.last_action == 0:
+                pyautogui.keyUp('down')
+            elif self.last_action == 2:
+                pyautogui.keyUp('up')
+
+            # key down action
+            if action == 0:
+                pyautogui.keyDown('down')
+            elif action == 2:
+                pyautogui.keyDown('up')
+
+            self.last_action = action
 
         old_obstacle_pos = self.obstacle_pos
         state = self.get_state()
@@ -90,8 +98,10 @@ class Environment(object):
         reward = 0
         if game_over:
             reward = -1
+            self.last_action = None
+            time.sleep(1)
+
         elif old_obstacle_pos != 10000 and old_obstacle_pos < self.obstacle_pos:
-            print "===========jumped========="
             reward = 0.1
 
         return state, reward, self.is_game_over()

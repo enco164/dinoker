@@ -53,7 +53,6 @@ else:
 for episode in range(k * iterations, (k+1) * iterations + 1):
 
     episode_exploration_rate = 1 - episode*1.0 / total_episodes*1.0  # (-(episode*1.0 / episodes*1.0) ** 2) + 1
-    loss = 0.0
     totalReward = 0
     can_play = env.reset()
 

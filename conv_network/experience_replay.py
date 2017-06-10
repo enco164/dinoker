@@ -1,11 +1,17 @@
 import numpy as np
-from tempfile import TemporaryFile
+import os
+
 
 class ExperienceReplay(object):
-    def __init__(self, max_memory=100, discount=.9):
+    def __init__(self, max_memory=100, discount=.9, memory_file_name="memory", iteration_postfix=""):
         self.max_memory = max_memory
         self.memory = list()
         self.discount = discount
+        self.memory_file_name = memory_file_name
+
+        # load memory
+        if os.path.isfile(memory_file_name + iteration_postfix + '.npy'):
+            self.load_memory(memory_file_name + iteration_postfix + '.npy')
 
     def remember(self, states, game_over):
         # memory[i] = ((state_t, action_t, reward_t, state_t+1), game_over?)
@@ -41,11 +47,11 @@ class ExperienceReplay(object):
 
         return inputs, targets
 
-    def save_memory(self):
-        np.save("memory", self.memory)
+    def save_memory(self, postfix=""):
+        np.save(self.memory_file_name + postfix, self.memory)
 
-    def load_memory(self, name):
-        self.memory = np.load(name+'.npy')
+    def load_memory(self, file_name):
+        self.memory = np.load(file_name)
         self.memory = self.memory.tolist()
 
     def can_learn(self):
