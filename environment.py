@@ -14,6 +14,7 @@ class Environment(object):
         self.runner_canvas = self.webdriver.find_element_by_class_name("runner-canvas")
         self.webdriver_actions = ActionChains(self.webdriver)
         self.state = np.array([])
+        self.last_action = None
 
     def reset(self):
         self.state = np.array([])
@@ -79,12 +80,29 @@ class Environment(object):
         return self.webdriver.execute_script("return Runner.instance_.crashed")
 
     def act(self, action):
-        if action == 0:
-            pyautogui.keyDown('down', pause=0.10)
-            pyautogui.keyUp('down')
-        elif action == 2:
-            pyautogui.keyDown('up', pause=0.10)
-            pyautogui.keyUp('up')
+        if self.last_action != action:
+            # key up last action
+            if self.last_action == 0:
+                pyautogui.keyUp('down')
+            elif self.last_action == 2:
+                pyautogui.keyUp('up')
+
+            # key down action
+            if action == 0:
+                pyautogui.keyDown('down', pause=0.10)
+            elif action == 2:
+                pyautogui.keyDown('up', pause=0.10)
+
+            self.last_action = action
+
+        # time.sleep(0.100)
+
+        # if action == 0:
+        #     pyautogui.keyDown('down', pause=0.10)
+        #     pyautogui.keyUp('down')
+        # elif action == 2:
+        #     pyautogui.keyDown('up', pause=0.10)
+        #     pyautogui.keyUp('up')
 
         new_state = self.get_state()
 
@@ -93,7 +111,9 @@ class Environment(object):
 
         if game_over:
             reward = -1
+            self.last_action = None
             time.sleep(1)
+
         elif len(self.state) > 0 and self.state[5] != -0.5 and self.state[5] < new_state[5]:
             reward = 0.1
 

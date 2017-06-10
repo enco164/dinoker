@@ -32,6 +32,8 @@ class Agent(object):
             model.add(Activation('relu'))
             model.add(Dense(hidden_size))
             model.add(Activation('relu'))
+            model.add(Dense(hidden_size))
+            model.add(Activation('relu'))
             model.add(Dense(num_actions))
             adam = Adam()
             model.compile(loss='mean_squared_error', optimizer=adam)

@@ -17,9 +17,9 @@ iterations = int(options.iterations)
 total_episodes = int(options.total_episodes)
 
 num_actions = 3
-max_memory = 8192
-batch_size = 64
-hidden_size = 64
+max_memory = 16384
+batch_size = 256
+hidden_size = 16
 save_on_nth_episode = 10
 
 log_file = open('log_e' + options.k + '.txt', 'w')
@@ -74,7 +74,8 @@ for episode in range(k * iterations, (k+1) * iterations + 1):
         state_p = state
 
         current_time = time.time()*1.0 - start_time
-        exploration_rate = current_time / mean_episode_time * episode_exploration_rate  #((current_time / avg_episode_time) ** 2) * episode_exploration_rate
+        exploration_rate = episode_exploration_rate
+        # exploration_rate = current_time / mean_episode_time * episode_exploration_rate  #((current_time / avg_episode_time) ** 2) * episode_exploration_rate
 
         # get action from agent based on state
         action = agent.get_action(state_p.reshape((1, -1)), exploration_rate)
