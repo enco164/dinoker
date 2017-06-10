@@ -42,7 +42,6 @@ class Environment(object):
             img = img.convert('L')
             # only black and white
             img = img.point(lambda x: 0 if x < 128 else 255, '1')
-            img.save('web.bmp')
             img = np.asarray(img.getdata(), dtype=np.float64).reshape((img.size[1], img.size[0]))
             img = skimage.transform.resize(img, (84, 84))
         return img
