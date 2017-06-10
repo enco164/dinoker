@@ -18,8 +18,11 @@ class Environment(object):
         self.webdriver.get(self.url)
         self.runner_canvas = self.webdriver.find_element_by_class_name("runner-canvas")
         self.webdriver_actions = ActionChains(self.webdriver)
+        self.webdriver.set_window_size(800, 600)
+        self.webdriver.set_window_position(50, 50)
         self.state = np.array([])
         self.last_action = None
+        self.obstacle_pos = None
 
     def reset(self):
         self.state = np.array([])
@@ -37,6 +40,8 @@ class Environment(object):
             mon = {'top': 200, 'left': 150, 'width': 600, 'height': 160}
             sct.get_pixels(mon)
             img = Image.frombytes('RGB', (sct.width, sct.height), sct.image)
+            img.show()
+            time.sleep(50000)
             img = img.convert('L')
             img = np.asarray(img.getdata(), dtype=np.float64).reshape((img.size[1], img.size[0]))
             img = skimage.transform.resize(img, (84, 84))
