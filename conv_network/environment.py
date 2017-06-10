@@ -6,7 +6,6 @@ import time
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.action_chains import ActionChains
-
 from PIL import Image
 from mss import mss
 
@@ -40,12 +39,12 @@ class Environment(object):
             mon = {'top': 200, 'left': 150, 'width': 600, 'height': 160}
             sct.get_pixels(mon)
             img = Image.frombytes('RGB', (sct.width, sct.height), sct.image)
-            img.show()
-            time.sleep(50000)
             img = img.convert('L')
+            # only black and white
+            img = img.point(lambda x: 0 if x < 128 else 255, '1')
+            img.save('web.bmp')
             img = np.asarray(img.getdata(), dtype=np.float64).reshape((img.size[1], img.size[0]))
             img = skimage.transform.resize(img, (84, 84))
-
         return img
 
     def get_obstacle_pos(self):
