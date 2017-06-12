@@ -21,7 +21,7 @@ total_episodes = int(options.total_episodes)
 
 
 num_actions = 3
-max_memory = 4096
+max_memory = 2048
 batch_size = 32
 save_on_nth_episode = 10
 
@@ -42,15 +42,16 @@ agent = Agent(num_actions=3,
               log_file=log_file)
 
 env = Environment()
+time.sleep(3)
 can_play = env.reset()
-time.sleep(1)
+time.sleep(3)
 allReward = 0
 
-if os.path.isfile('times_e' + str(k*iterations) + '.npy'):
-    all_times = np.load('times_e' + str(k*iterations) + '.npy')
-    all_times = all_times.tolist()
-else:
-    all_times = [5.0]
+# if os.path.isfile('times_e' + str(k*iterations) + '.npy'):
+#     all_times = np.load('times_e' + str(k*iterations) + '.npy')
+#     all_times = all_times.tolist()
+# else:
+#     all_times = [5.0]
 
 for episode in range(k * iterations, (k+1) * iterations + 1):
 
@@ -66,7 +67,7 @@ for episode in range(k * iterations, (k+1) * iterations + 1):
     state = env.get_state()
 
     # update mean_episode_time
-    mean_episode_time = np.median(all_times)
+    # mean_episode_time = np.median(all_times)
 
     start_time = time.time()
     current_time = time.time() * 1.0 - start_time
@@ -75,12 +76,12 @@ for episode in range(k * iterations, (k+1) * iterations + 1):
         state_p = state
 
         current_time = time.time() * 1.0 - start_time
-        exploration_rate = episode_exploration_rate
+        exploration_rate = max(episode_exploration_rate, 0.1)
         # exploration_rate = current_time / mean_episode_time * episode_exploration_rate  #((current_time / avg_episode_time) ** 2) * episode_exploration_rate
 
         # get action from agent based on state
-        action = agent.get_action(state_p.reshape((1, -1)), exploration_rate)
-
+        action = agent.get_action(state_p, exploration_rate)
+        
         # send environment action
         state, reward, game_over = env.act(action)
 
@@ -101,9 +102,9 @@ for episode in range(k * iterations, (k+1) * iterations + 1):
     allReward += totalReward
 
     # store episode time length
-    all_times.append(current_time)
-    if len(all_times) > save_on_nth_episode:
-        del all_times[0]
+    # all_times.append(current_time)
+    # if len(all_times) > save_on_nth_episode:
+    #     del all_times[0]
 
     print "<<<Episode: {}; Total Reward: {}; eps: {}, E: {}, time: {}>>>" \
         .format(episode, totalReward, exploration_rate, episode_exploration_rate, current_time)

@@ -37,19 +37,18 @@ class Agent(object):
             model.add(Activation('relu'))
             model.add(Dense(num_actions))
             model.add(Activation('linear'))
-
             adam = Adam()
-            model.compile(loss='mse', optimizer=adam)
-
+            model.compile(loss='mean_squared_error', optimizer=adam)
             self.model = model
 
     def get_action(self, state, exploration_rate):
         if np.random.rand() <= exploration_rate:
             action = np.random.randint(0, self.num_actions)
+            
         else:
             q = self.model.predict(state)[0]
             action = np.argmax(q)
-
+        
         return action
 
     def remember(self, states, game_over):

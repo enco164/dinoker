@@ -1,5 +1,6 @@
 import numpy as np
 import os
+import time
 
 
 class ExperienceReplay(object):
@@ -8,6 +9,7 @@ class ExperienceReplay(object):
         self.memory = list()
         self.discount = discount
         self.memory_file_name = memory_file_name
+        self.save_called = 0
 
         # load memory
         if os.path.isfile(memory_file_name + iteration_postfix + '.npy'):
@@ -48,7 +50,9 @@ class ExperienceReplay(object):
         return inputs, targets
 
     def save_memory(self, postfix=""):
-        np.save(self.memory_file_name + postfix, self.memory)
+        if self.save_called % 4 == 0:
+            np.save(self.memory_file_name + postfix, self.memory)
+        self.save_called = self.save_called + 1
 
     def load_memory(self, file_name):
         self.memory = np.load(file_name)

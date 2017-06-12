@@ -102,6 +102,11 @@ class Environment(object):
         if game_over:
             reward = -1
             self.last_action = None
+            # key up last action
+            if action == 0:
+                pyautogui.keyUp('down')
+            elif action == 2:
+                pyautogui.keyUp('up')
             time.sleep(1)
 
         elif old_obstacle_pos != 10000 and old_obstacle_pos < self.obstacle_pos:

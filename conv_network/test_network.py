@@ -4,13 +4,14 @@ from environment import Environment
 from keras.models import load_model
 
 
-file_name = './Conv2D_screenshot_e1520.h5'
+file_name = './network_e3000.h5'
 
 episodes = 100000
 
 model = load_model(file_name)
 
 env = Environment()
+time.sleep(1)
 can_play = env.reset()
 time.sleep(1)
 for episode in range(0, episodes):
@@ -27,6 +28,7 @@ for episode in range(0, episodes):
 
     while not game_over:
         q = model.predict(state)[0]
+        print q
 
         action = np.argmax(q)
 
