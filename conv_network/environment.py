@@ -43,7 +43,7 @@ class Environment(object):
             # only black and white
             img = img.point(lambda x: 0 if x < 128 else 255, '1')
             img = np.asarray(img.getdata(), dtype=np.float64).reshape((img.size[1], img.size[0]))
-            img = skimage.transform.resize(img, (84, 84))
+            img = skimage.transform.resize(img, (200, 50))
         return img
 
     def get_obstacle_pos(self):
@@ -71,7 +71,7 @@ class Environment(object):
         states.extend([self.get_screen()])
 
         states = np.array(states)
-        states = states.reshape(1, 84, 84, 4)
+        states = states.reshape(1, 200, 50, 4)
 
         return states
 

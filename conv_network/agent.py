@@ -28,12 +28,12 @@ class Agent(object):
         else:
             print "===Creating model==="
             model = Sequential()
-            model.add(Conv2D(16, (8, 8), padding="same", strides=(4, 4), input_shape=(84, 84, 4)))
+            model.add(Conv2D(32, (8, 8), padding="same", strides=(4, 4), input_shape=(200, 50, 4)))
             model.add(Activation('relu'))
-            model.add(Conv2D(32, (4, 4), padding="same", strides=(2, 2)))
+            model.add(Conv2D(64, (4, 4), padding="same", strides=(2, 2)))
             model.add(Activation('relu'))
             model.add(Flatten())
-            model.add(Dense(256))
+            model.add(Dense(512))
             model.add(Activation('relu'))
             model.add(Dense(num_actions))
             model.add(Activation('linear'))

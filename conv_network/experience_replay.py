@@ -59,7 +59,7 @@ class ExperienceReplay(object):
         self.memory = self.memory.tolist()
 
     def can_learn(self):
-        return len(self.memory) > 4
+        return len(self.memory) > 32
 
     def memory_len(self):
         return len(self.memory)
